@@ -14,11 +14,11 @@
         <e p="Graphs.cs" t="Include" />
         <e p="Map.cs" t="Include" />
         <e p="NoisyEdges.cs" t="Include" />
+        <e p="PoissonDisk.cs" t="Include" />
         <e p="scripts" t="Include">
           <e p="Delaunator.cs" t="Include" />
           <e p="Delaunay.cs" t="Include" />
           <e p="IPathable.cs" t="Include" />
-          <e p="NoisyEdges.cs" t="Include" />
           <e p="Path.cs" t="Include" />
           <e p="Perlin.cs" t="Include" />
           <e p="Polygon.cs" t="Include" />

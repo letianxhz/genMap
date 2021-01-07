@@ -8,7 +8,7 @@ namespace d3_delaunay_cs
     {
         public static Random Random = new Random();
 
-        public const int DefaultPointsPerIteration = 30;
+        public const int DefaultPointsPerIteration = 100;
 
         static readonly float SquareRootTwo = (float)Math.Sqrt(2);
 
@@ -24,8 +24,11 @@ namespace d3_delaunay_cs
 
         struct State
         {
+
+            public Vector2 centerPos;
             public Vector2?[,] Grid;
             public List<Vector2> ActivePoints, Points;
+            public List<Vector2> ret;
         }
 
         public static List<Vector2> SampleCircle(Vector2 center, float radius, float minimumDistance)
@@ -65,9 +68,11 @@ namespace d3_delaunay_cs
             {
                 Grid = new Vector2?[settings.GridWidth, settings.GridHeight],
                 ActivePoints = new List<Vector2>(),
-                Points = new List<Vector2>()
+                Points = new List<Vector2>(),
+                ret = new List<Vector2>(),
+                centerPos = new Vector2(1024, 1024)    
             };
-
+            state.ret.Add(state.centerPos);
             AddFirstPoint(ref settings, ref state);
 
             while (state.ActivePoints.Count != 0)
@@ -84,7 +89,7 @@ namespace d3_delaunay_cs
                     state.ActivePoints.RemoveAt(listIndex);
             }
 
-            return state.Points;
+            return state.ret;
         }
 
         static void AddFirstPoint(ref Settings settings, ref State state)
@@ -135,6 +140,12 @@ namespace d3_delaunay_cs
                     state.ActivePoints.Add(q);
                     state.Points.Add(q);
                     state.Grid[(int)qIndex.X, (int)qIndex.Y] = q;
+
+                    //if (Vector2.Distance(q, settings.Center) > 3 * settings.MinimumDistance)
+                    //{
+                        state.ret.Add(q);  
+                    //}
+
                 }
             }
             return found;

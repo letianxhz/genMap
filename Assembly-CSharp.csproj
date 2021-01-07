@@ -59,14 +59,14 @@
   <ItemGroup>
     <Compile Include="Assets\DelaunayVoronoi.cs" />
     <Compile Include="Assets\Extensions\Vector2Extensions.cs" />
-    <Compile Include="Assets\genMap.cs" />
+    <Compile Include="Assets\GenMap.cs" />
     <Compile Include="Assets\Graphs.cs" />
     <Compile Include="Assets\Map.cs" />
     <Compile Include="Assets\NoisyEdges.cs" />
+    <Compile Include="Assets\PoissonDisk.cs" />
     <Compile Include="Assets\scripts\Delaunator.cs" />
     <Compile Include="Assets\scripts\Delaunay.cs" />
     <Compile Include="Assets\scripts\IPathable.cs" />
-    <Compile Include="Assets\scripts\NoisyEdges.cs" />
     <Compile Include="Assets\scripts\Path.cs" />
     <Compile Include="Assets\scripts\Perlin.cs" />
     <Compile Include="Assets\scripts\Polygon.cs" />

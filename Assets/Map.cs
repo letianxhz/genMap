@@ -6,30 +6,19 @@ namespace map
 {
     public class Map
     {
-
-        public class Margine
-        {
-            public Vector2 center; //维洛中心点
-            public List<Vector2> edges = new List<Vector2>(); //多边形边界点
-            public Dictionary<int, Vector2[]> edgeIndex = new Dictionary<int, Vector2[]>();
-        }
-        
-        public static float SIZE;
         public List<Vector2> points; // Only useful during map construction
         public Dictionary<int, Vector2> index2Center = new Dictionary<int, Vector2>();
         public List<Graphs.Center> centers; //维洛图中心点信息
-        public List<Graphs.Corner> corners;
         public List<Graphs.Edge>  edges = new List<Graphs.Edge>(); //边缘四边形
-        public int numPoints;
-        public Dictionary<int, Margine> margins = new Dictionary<int, Margine>(); //key centter pos index 
+        public int numPoints; // 记录生成的维洛点点个数
+        public Dictionary<int, VoronoiBoundary> margins = new Dictionary<int, VoronoiBoundary>(); //key centter pos index 
         
         public Dictionary<string, int> path = new Dictionary<string, int>();//相邻边的索引信息
         
         public NoisyEdges noisyEdges = new NoisyEdges(); //维洛图边界边嘈杂算法
         
-        public Map(float size){
-            SIZE = size;
-            numPoints = 1;
+        public Map(){
+            numPoints = 0;
             reset();
         }
         
@@ -48,27 +37,14 @@ namespace map
             if (centers != null) {
                 foreach(var p in centers){
                     p.neighbors.Clear();
-                    p.corners.Clear();
                     p.borders.Clear();
                 }
                 centers.Clear();
             }
 
-            if (corners != null) {
-                foreach (var q in corners){
-                    q.adjacent.Clear();
-                    q.touches.Clear();
-                    q.protrudes.Clear();
-                    q.downslope = null;
-                    q.watershed = null;
-                }
-                corners.Clear();
-            }
-
             if (points == null) points = new List<Vector2> ();
             if (edges == null) edges = new List<Graphs.Edge> ();
             if (centers == null) centers = new List<Graphs.Center> ();
-            if (corners == null) corners = new List<Graphs.Corner> ();
         }
 
         private int pathIndex = 0;
@@ -76,7 +52,6 @@ namespace map
         {
             pathIndex = 0;
             Graphs.Center p;
-            var centerLoopup = new Dictionary<Vector2, Graphs.Center>();
             
             foreach (var center in d.Points)
             {
@@ -85,9 +60,8 @@ namespace map
                 p.point = new Vector2(center.X, center.Y);
                 p.neighbors = new List<Graphs.Center>();
                 p.borders = new List<Graphs.Edge>();
-                p.corners = new List<Graphs.Corner>();
                 centers.Add(p);
-                centerLoopup[p.point] = p;
+                ++numPoints;
                 
                 var hoverIndex = d.Delaunay.find(center.X, center.Y);
                 
@@ -100,8 +74,8 @@ namespace map
                 
                 if (polygon.Any(point => double.IsNaN(point[0]) || double.IsNaN(point[1]))) break;
                 
-                var marginPos = new  Margine();
-                marginPos.center = new Vector2(center.X, center.Y);
+                var v = new  VoronoiBoundary();
+                v.center = new Vector2(center.X, center.Y);
 
                 var par = points[0];
                 for (int i = 1; i < points.Length; i++)
@@ -113,7 +87,7 @@ namespace map
 
                     par = points[i];
                     
-                    marginPos.edges.Add(points[i]);
+                    v.boundarys.Add(points[i]);
                     string key1 = points[i].ToString() + points[i - 1].ToString();
                     string key2 = points[i - 1].ToString() + points[i].ToString();
 
@@ -137,91 +111,14 @@ namespace map
 
                     path.TryGetValue(key1, out index);
                     
-                    marginPos.edgeIndex.Add(index, new Vector2[] {points[i - 1], points[i]});
+                    v.index2Boundary.Add(index, new Vector2[] {points[i - 1], points[i]});
                 }
-                
-
-                /*
-                foreach (var pos in polygon)
-                {
-                    marginPos.edges.Add(new Vector2((float)pos[0], (float)pos[1]));
-                }*/
-                
-                margins.Add(hoverIndex, marginPos);
-                
-                if (polygon.Any(point => double.IsNaN(point[0]) || double.IsNaN(point[1]))) break;
-                foreach (var polygonIndex in d.Delaunay.neighbors(hoverIndex))
-                {
-                    var ps = d.CellPolygons[(int)polygonIndex];
-                }
+                margins.Add(hoverIndex, v);
             }
 
             edges.Clear();
             edges.AddRange(getEdges(d));
-            noisyEdges.buildNoisyEdges(this);
-            
-            
-            
-            
-            var  _cornerMap = new Dictionary<int, List<Graphs.Corner>> ();
-            Func<Vector2, Graphs.Corner> makeCorner = delegate(Vector2 point) {
-                int bucket;
-			
-                if (point == Vector2.zero) { return null; }
-			
-                for (bucket = (int)(point.x)-1; bucket <= (int)(point.x)+1; bucket++) {
-                    if(_cornerMap.ContainsKey(bucket)){
-                        foreach(var c in _cornerMap[bucket]){
-                            var dx = point.x - c.point.x;
-                            var dy = point.y - c.point.y;
-                            if(dx*dx+dy*dy<1e-6F){
-                                return c;
-                            }
-                        }
-                    }
-                }
-			
-                bucket = (int)point.x;
-                if (!_cornerMap.ContainsKey (bucket)) {
-                    _cornerMap.Add(bucket, null);
-                }
-                if(_cornerMap[bucket] == null) {_cornerMap[bucket] = new List<Graphs.Corner>();}
-			
-			
-                var q = new Graphs.Corner ();
-                q.index = corners.Count;
-                corners.Add (q);
-                q.point = point;
-                q.border = (point.x == 0F || point.x == SIZE || point.y == 0F || point.y == SIZE);
-                q.touches = new List<Graphs.Center> ();
-                q.protrudes = new List<Graphs.Edge> ();
-                q.adjacent = new List<Graphs.Corner> ();
-                _cornerMap[bucket].Add(q);
-                return q;
-            };
-            
-            Action<List<Graphs.Corner>, Graphs.Corner> addToCornerList = delegate(List<Graphs.Corner> v, Graphs.Corner x) 
-            {
-                if (x != null && v.IndexOf (x) < 0) { v.Add (x); }
-            };
-            
-            Action<List<Graphs.Center>, Graphs.Center> addToCenterList = delegate(List<Graphs.Center> v, Graphs.Center x) 
-            {
-                if (x != null && v.IndexOf (x) < 0) { v.Add (x); }
-            };
-
-            foreach (var center in d.Points)
-            {
-                var hoverIndex = d.Delaunay.find(center.X, center.Y);
-
-                var polygon = d.CellPolygons[hoverIndex];
-                if (polygon.Any(point => double.IsNaN(point[0]) || double.IsNaN(point[1]))) break;
-                
-                
-                foreach (var polygonIndex in d.Delaunay.neighbors(hoverIndex))
-                {
-                }
-            }
+            noisyEdges.BuildNoisyEdges(this);
         }
         
         /**
@@ -235,37 +132,35 @@ namespace map
                 var hoverIndex = d.Delaunay.find(center.X, center.Y);
 
                 
-                
-                
                 var polygon = d.CellPolygons[hoverIndex];
                 if (polygon.Any(point => double.IsNaN(point[0]) || double.IsNaN(point[1]))) break;
-                Margine margine = null;    
-                var succ= margins.TryGetValue(hoverIndex, out margine); 
+                VoronoiBoundary vb = null;    
+                var succ= margins.TryGetValue(hoverIndex, out vb); 
                 
                 
                 foreach (var polygonIndex in d.Delaunay.neighbors(hoverIndex))
                 {
-                    Margine checkMargine = null;    
-                    var ok= margins.TryGetValue((int)polygonIndex, out checkMargine);
+                    VoronoiBoundary checkVb = null;    
+                    var ok= margins.TryGetValue((int)polygonIndex, out checkVb);
                     
                     Graphs.Edge edge = new Graphs.Edge();
                     
 
-                    if (center.X < checkMargine.center.x)
+                    if (center.X < checkVb.center.x)
                     {
                         edge.c0 = new Vector2(center.X, center.Y);
-                        edge.c1 = checkMargine.center;
+                        edge.c1 = checkVb.center;
                     }
                     else
                     {
                         edge.c1 = new Vector2(center.X, center.Y);
-                        edge.c0 = checkMargine.center;
+                        edge.c0 = checkVb.center;
                     }
 
                     bool ch = false;
-                    foreach (KeyValuePair<int, Vector2[]> kv in checkMargine.edgeIndex)
+                    foreach (KeyValuePair<int, Vector2[]> kv in checkVb.index2Boundary)
                     {
-                        if (margine.edgeIndex.ContainsKey(kv.Key))
+                        if (vb.index2Boundary.ContainsKey(kv.Key))
                         {
 
                             if (kv.Value[0].x < kv.Value[1].x)
@@ -293,5 +188,17 @@ namespace map
             return ret;
         }
 
+        
+        
+        /**
+         * 维洛多边形共边信息数据
+         */
+        public class VoronoiBoundary
+        {
+            public Vector2 center; //维洛中心点
+            public List<Vector2> boundarys = new List<Vector2>(); //多边形边界点
+            public Dictionary<int, Vector2[]> index2Boundary = new Dictionary<int, Vector2[]>(); //边界边索引数据 key：边界边的索引 value: 组成该边的两个点
+        }
+        
     }
 }

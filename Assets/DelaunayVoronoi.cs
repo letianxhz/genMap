@@ -37,6 +37,8 @@ namespace map
          UniformPoissonDiskSampler.Random = new System.Random(Seed);
          Points = UniformPoissonDiskSampler.SampleRectangle(new System.Numerics.Vector2(0, 0), new System.Numerics.Vector2(Width, Height), Radius);
 
+         //Points = PoissonDisk.genPoints(Seed);
+         
          Delaunay = Delaunay.from(Points.Select(point => new double[] { point.X, point.Y }).ToArray());
          Voronoi = Delaunay.voronoi(new d3_delaunay_cs.Voronoi.Bounds { x0 = 0.5, y0 = 0.5, x1 = Width - 0.5, y1 = Height - 0.5 });
          CellPolygons = Voronoi.cellPolygons().ToList();
