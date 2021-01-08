@@ -14,7 +14,7 @@ public class GenMap : MonoBehaviour
     
     public const int WIDTH = 2048;
     public const int HEIGHT = 2048;
-    public const int _textureScale = 10; //用于画图像素点，使地图更加精细
+    public const int _textureScale = 7; //用于画图像素点，使地图更加精细
     
     public Map m = new Map();
     
@@ -33,13 +33,13 @@ public class GenMap : MonoBehaviour
         var h = HEIGHT * _textureScale;
         Texture2D texture2D = new Texture2D(w, h);
         texture2D.SetPixels(Enumerable.Repeat(Color.gray, h * w).ToArray());
-        var ds = d1.Delaunay.points;
+        
         m.buildGraph(d1);
-        DrawDelaunay(d1, texture2D);
-        DrawVoronoi(d1, texture2D);
-        texture2D.DrawPoint((int)1024 * _textureScale, (int)1024 * _textureScale, Color.yellow, 6);
+        //DrawDelaunay(d1, texture2D);
+        //DrawVoronoi(d1, texture2D);
         DrawVoronoiEdge(d1, texture2D);
         //BuildAssistGrids(d1, texture2D);
+        
         texture2D.Apply();
         byte[] bytes1 = texture2D.EncodeToPNG();
         File.WriteAllBytes(Application.dataPath + "/test.png", bytes1);
@@ -114,10 +114,12 @@ public class GenMap : MonoBehaviour
         }
     }
 
-
+    /**
+     * 画带嘈杂算法的维洛图边界
+     */
     public void DrawVoronoiEdge(DelaunayVoronoi d, Texture2D texture2D)
     {
-        foreach (var point in m.centers)
+        /*foreach (var point in m.centers)
         {    
             texture2D.DrawPoint((int)point.point.x * _textureScale, (int)point.point.y * _textureScale, Color.red, 3);
         }
@@ -151,11 +153,12 @@ public class GenMap : MonoBehaviour
         //r0 ~ t0
         texture2D.DrawLine((int)r0.x * _textureScale, (int)r0.y * _textureScale, (int)t0.x * _textureScale, (int)t0.y * _textureScale, Color.black);
         
+        
         var path = m.noisyEdges.genNoisyEdges(4, t0, t1, r0, r1).line;
         for (var i = 0; i < path.Count - 1; i++)
         {
             texture2D.DrawLine((int)path[i].x * _textureScale, (int)path[i].y * _textureScale, (int)path[i + 1].x * _textureScale, (int)path[i + 1].y * _textureScale, Color.green);
-        }
+        }*/
 
         //drawVoronoi(d, texture2D);
 

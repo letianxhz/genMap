@@ -48,6 +48,11 @@ namespace map
         }
 
         private int pathIndex = 0;
+        
+        
+        /**
+         * 构建维洛图信息
+         */
         public void buildGraph(DelaunayVoronoi d)
         {
             pathIndex = 0;

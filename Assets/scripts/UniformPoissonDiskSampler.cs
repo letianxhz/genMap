@@ -70,9 +70,8 @@ namespace d3_delaunay_cs
                 ActivePoints = new List<Vector2>(),
                 Points = new List<Vector2>(),
                 ret = new List<Vector2>(),
-                centerPos = new Vector2(1024, 1024)    
             };
-            state.ret.Add(state.centerPos);
+            state.ret.Add(settings.Center);
             AddFirstPoint(ref settings, ref state);
 
             while (state.ActivePoints.Count != 0)
