@@ -103,8 +103,7 @@ public class GenMap : MonoBehaviour
             var hoverIndex = d.Delaunay.find(center.X, center.Y);
             var polygon = d.CellPolygons[hoverIndex];
             if (polygon.Any(point => double.IsNaN(point[0]) || double.IsNaN(point[1]))) break;
-            var points = polygon
-                .Select(point => new Vector2((int) point[0] * _textureScale, (int) point[1] * _textureScale)).ToArray();
+            var points = polygon.Select(point => new Vector2((int) point[0] * _textureScale, (int) point[1] * _textureScale)).ToArray();
             for (int i = 0; i < points.Length; i++)
             {
                 Vector2 nextPos = points[i];
